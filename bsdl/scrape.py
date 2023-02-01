@@ -58,11 +58,13 @@ def getArtistStreams(artist, headers):
     return tracksStreamLinks
 
 
-def getTrackStreams(link, headers):
+def getTrackStream(link, headers):
     pass
 
 
 def download(streams, track):
+    # TODO: Add DL funcs
+
     if not track:
         print(streams)
 
