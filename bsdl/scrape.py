@@ -3,14 +3,10 @@ import requests
 
 """
     For Reference
-    
+
     # trackIds = []
     # for elements in trackData['hits']:
     #     trackIds.append(elements['id'])
-
-    # metaData = []
-    # for elements in trackData['hits']:
-    #     metaData.append(elements['metadata'])
 
 """
 
@@ -34,12 +30,16 @@ headers = {
 }
 
 
-def getArtistStreams(artist, headers):
+def getArtistData(artist: str, getStreams: bool, getMetaData: bool, headers: dict):
+    artistDoesNotExist = True
 
-    artistData = requests.get(
+    artistPageResponse = requests.get(
         f'https://main.v2.beatstars.com/musician?permalink={artist}&fields=profile,user_contents,stats,bulk_deals,social_networks', headers=headers)
 
-    userID = artistData.json()[
+    if artistPageResponse.status_code == 404:
+        return
+
+    userID = artistPageResponse.json()[
         'response']['data']['profile']['user_id']
     memberId = f'MR{userID}'
 
@@ -53,20 +53,21 @@ def getArtistStreams(artist, headers):
     )
 
     tracksData = responseTracksData.json()
-    tracksStreamLinks = tracksData['facets']['bundle.stream.url'].keys()
 
-    return tracksStreamLinks
+    if getStreams:
+        tracksStreamLinks = tracksData['facets']['bundle.stream.url'].keys()
+
+        return tracksStreamLinks
+
+    elif getMetaData:
+        metaData = []
+        for elements in tracksData['hits']:
+            metaData.append(elements['metadata'])
+
+        return metaData
+
+    return "Error Occured: Missed Paramaters"
 
 
 def getTrackStream(link, headers):
     pass
-
-
-def download(streams, track):
-    # TODO: Add DL funcs
-
-    if not track:
-        print(streams)
-
-    else:
-        pass
