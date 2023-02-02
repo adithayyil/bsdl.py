@@ -42,7 +42,7 @@ def main(artist: str):
                     h.stop_and_persist(
                         symbol=f'{red}✖' + f"{red} Error Occured")
     else:
-        print(f"{artist} does not exist!")
+        print(f"{artist} does not exist or doesn't have any tracks!")
 
 
 if __name__ == '__main__':

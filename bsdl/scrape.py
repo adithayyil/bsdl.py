@@ -37,7 +37,7 @@ def getArtistData(artist: str, getStreams: bool, getMetaData: bool, headers: dic
         f'https://main.v2.beatstars.com/musician?permalink={artist}&fields=profile,user_contents,stats,bulk_deals,social_networks', headers=headers)
 
     if artistPageResponse.status_code == 404:
-        return
+        return None
 
     userID = artistPageResponse.json()[
         'response']['data']['profile']['user_id']
@@ -52,12 +52,19 @@ def getArtistData(artist: str, getStreams: bool, getMetaData: bool, headers: dic
         data=data,
     )
 
+    if responseTracksData.status_code == 404:
+        return
+
     tracksData = responseTracksData.json()
 
     if getStreams:
-        tracksStreamLinks = tracksData['facets']['bundle.stream.url'].keys()
+        if "bundle.stream.url" in tracksData['facets']:
+            tracksStreamLinks = tracksData['facets']['bundle.stream.url'].keys(
+            )
+            return tracksStreamLinks
 
-        return tracksStreamLinks
+        else:
+            return None
 
     elif getMetaData:
         metaData = []
