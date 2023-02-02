@@ -1,6 +1,7 @@
 # bsdl
 ## 🛠️ WIP
 
+#### Inspired by [scdl](https://github.com/flyingrub/scdl) & [ttdl](https://github.com/claydol/ttdl)
 
 ## Usage
 
@@ -16,4 +17,3 @@ bsdl -a [USER]
 - [ ] Download a single track from a link/trackID
 - [ ] Add a function to change default path (--default-path [PATH])
 - [ ] Depoly to PyPi
-
