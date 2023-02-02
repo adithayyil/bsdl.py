@@ -9,7 +9,7 @@
 bsdl -a [USER]
 ```
 
-# To-Do
+## To-Do
 
 - [ ] Fix agolia only retreving 100 sets per request ([Read](https://www.algolia.com/doc/guides/managing-results/refine-results/faceting/))
 - [ ] Get track titles
