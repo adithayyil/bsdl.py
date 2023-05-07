@@ -30,7 +30,7 @@ headers = {
 }
 
 
-def getArtistData(artist: str, getStreams: bool, getMetaData: bool, headers: dict):
+def getArtistData(artist: str, getTitles: bool, getStreams: bool, getMetaData: bool, headers: dict):
     artistDoesNotExist = True
 
     artistPageResponse = requests.get(
@@ -52,20 +52,45 @@ def getArtistData(artist: str, getStreams: bool, getMetaData: bool, headers: dic
         data=data,
     )
 
+    # No tracks in artist/server error
     if responseTracksData.status_code == 404:
         return
 
     tracksData = responseTracksData.json()
 
+    # Gets all track titles on page 0 (100 tracks)
+    if getTitles:
+        trackTitles = []
+        for track in tracksData['hits']:
+            trackTitles.append(
+                track['title'])
+
+        return trackTitles
+
+    # Gets all stream links on page 0 (100 tracks)
     if getStreams:
+        ''' # OLD VERSION OF GETTING STREAM LINKS
         if "bundle.stream.url" in tracksData['facets']:
             tracksStreamLinks = tracksData['facets']['bundle.stream.url'].keys(
             )
+            return tracksStreamLinks
+        '''
+        if tracksData['hits'] != None:
+            tracksStreamLinks = []
+            for track in tracksData['hits']:
+                try:
+                    tracksStreamLinks.append(
+                        track['bundle']['stream']['url'])
+                except KeyError:
+                    tracksStreamLinks.append(
+                        track['bundle']['mp3']['url'].replace('download', 'stream'))
+
             return tracksStreamLinks
 
         else:
             return None
 
+    # Gets all track metadata (not really...)
     elif getMetaData:
         metaData = []
         for elements in tracksData['hits']:
@@ -74,7 +99,3 @@ def getArtistData(artist: str, getStreams: bool, getMetaData: bool, headers: dic
         return metaData
 
     return "Error Occured: Missed Paramaters"
-
-
-def getTrackStream(link, headers):
-    pass
