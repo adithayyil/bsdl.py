@@ -12,8 +12,8 @@ bsdl -a [USER]
 
 ## To-Do
 
-- [ ] Fix agolia only retreving 100 sets per request ([Read](https://www.algolia.com/doc/guides/managing-results/refine-results/faceting/))
+- [x] Fix agolia only retreving 100 sets per request ([Read](https://www.algolia.com/doc/guides/managing-results/refine-results/faceting/))
 - [ ] Get track titles
 - [ ] Download a single track from a link/trackID
-- [ ] Add a function to change default path (--default-path [PATH])
+- [ ] Loop through each [page](https://www.algolia.com/doc/api-reference/api-parameters/page/) if there are 100> tracks
 - [ ] Depoly to PyPi
