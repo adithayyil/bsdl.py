@@ -1,9 +1,0 @@
-LICENSE
-README.md
-setup.py
-bsdl.egg-info/PKG-INFO
-bsdl.egg-info/SOURCES.txt
-bsdl.egg-info/dependency_links.txt
-bsdl.egg-info/entry_points.txt
-bsdl.egg-info/requires.txt
-bsdl.egg-info/top_level.txt
