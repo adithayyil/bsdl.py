@@ -1,16 +1,6 @@
 import json
 import requests
 
-"""
-    For Reference
-
-    # trackIds = []
-    # for elements in trackData['hits']:
-    #     trackIds.append(elements['id'])
-
-"""
-
-
 headers = {
     'Accept': '*/*',
     'Accept-Language': 'en-US,en;q=0.9',
@@ -58,6 +48,11 @@ def getArtistData(artist: str, getTitles: bool, getStreams: bool, getMetaData: b
 
     tracksData = responseTracksData.json()
 
+    trackIDs = []
+    for v2Id in tracksData['hits']:
+        trackIDs.append(
+            v2Id['v2Id'])
+
     # Gets all track titles on page 0 (100 tracks)
     if getTitles:
         trackTitles = []
@@ -69,26 +64,16 @@ def getArtistData(artist: str, getTitles: bool, getStreams: bool, getMetaData: b
 
     # Gets all stream links on page 0 (100 tracks)
     if getStreams:
-        ''' # OLD VERSION OF GETTING STREAM LINKS
-        if "bundle.stream.url" in tracksData['facets']:
-            tracksStreamLinks = tracksData['facets']['bundle.stream.url'].keys(
-            )
-            return tracksStreamLinks
-        '''
-        if tracksData['hits'] != None:
-            tracksStreamLinks = []
-            for track in tracksData['hits']:
-                try:
-                    tracksStreamLinks.append(
-                        track['bundle']['stream']['url'])
-                except KeyError:
-                    tracksStreamLinks.append(
-                        track['bundle']['mp3']['url'].replace('download', 'stream'))
+        tracksStreamLinks = []
+        for ID in trackIDs:
+            responseTrackData = requests.get(
+                f'https://main.v2.beatstars.com/beat?id={ID}&fields=details,stats,licenses', headers=headers)
+            if responseTrackData.status_code == 404:
+                return
+            tracksStreamLinks.append(
+                responseTrackData.json()['response']['data']['details']['stream_url'])
 
-            return tracksStreamLinks
-
-        else:
-            return None
+        return tracksStreamLinks
 
     # Gets all track metadata (not really...)
     elif getMetaData:

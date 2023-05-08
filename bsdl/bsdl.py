@@ -21,10 +21,13 @@ def folderCheck(name):  # from ttdl
 @click.command()
 @click.option("-artist", "-a", help="Downloads all tracks of user")
 def main(artist: str):
+    spinner = Halo(text='Retrieving Data', spinner='dots')
+    spinner.start()
     streams = getArtistData(artist=artist, getTitles=False, getStreams=True,
                             getMetaData=False, headers=headers)
     titles = getArtistData(artist=artist, getTitles=True, getStreams=False,
                            getMetaData=False, headers=headers)
+    spinner.stop()
 
     if streams != None:
         loadFormat = "Downloading track..."
