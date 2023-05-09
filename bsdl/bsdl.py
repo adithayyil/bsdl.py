@@ -18,9 +18,7 @@ def folderCheck(name):  # from ttdl
         os.mkdir(os.path.join(folder, name))
 
 
-@click.command()
-@click.option("-artist", "-a", help="Downloads all tracks of user")
-def main(artist: str):
+def downloadArtist(artist):
     spinner = Halo(text='Retrieving Data', spinner='dots')
     spinner.start()
     streams = getArtistData(artist=artist, getTitles=False, getStreams=True,
@@ -45,6 +43,20 @@ def main(artist: str):
                         symbol=f'{red}✖' + f"{red} Error Occured")
     else:
         print(f"{artist} does not exist or doesn't have any tracks!")
+
+
+def downloadTrack():
+    pass
+
+
+@click.command(help="bsdl - a CLI tool for downloading BeatStars Music.")
+@click.option("-artist", "-a", help='Download all tracks from a artist', metavar="[ARTIST]")
+@click.option("-track", "-t", help='Download a track', metavar="[LINK]")
+def main(artist: str, track: str):
+    if artist:
+        downloadArtist(artist)
+    if track:
+        downloadTrack()
 
 
 if __name__ == '__main__':
