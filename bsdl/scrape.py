@@ -20,7 +20,7 @@ headers = {
 }
 
 
-def getArtistData(artist: str, getTitles: bool, getStreams: bool, getMetaData: bool, headers: dict):
+def getTracksData(artist: str):
     artistDoesNotExist = True
 
     artistPageResponse = requests.get(
@@ -48,39 +48,39 @@ def getArtistData(artist: str, getTitles: bool, getStreams: bool, getMetaData: b
 
     tracksData = responseTracksData.json()
 
+    return tracksData
+
+
+def getStream(trackIDs):
+    tracksStreamLinks = []
+    for ID in trackIDs:
+        responseTrackData = requests.get(
+            f'https://main.v2.beatstars.com/beat?id={ID}&fields=details,stats,licenses', headers=headers)
+        if responseTrackData.status_code == 404:
+            return
+        tracksStreamLinks.append(
+            responseTrackData.json()['response']['data']['details']['stream_url'])
+
+    return tracksStreamLinks
+
+
+def getTrackIDs(tracksData):
     trackIDs = []
     for v2Id in tracksData['hits']:
         trackIDs.append(
             v2Id['v2Id'])
 
-    # Gets all track titles on page 0 (100 tracks)
-    if getTitles:
-        trackTitles = []
-        for track in tracksData['hits']:
-            trackTitles.append(
-                track['title'])
+    return trackIDs
 
-        return trackTitles
 
-    # Gets all stream links on page 0 (100 tracks)
-    if getStreams:
-        tracksStreamLinks = []
-        for ID in trackIDs:
-            responseTrackData = requests.get(
-                f'https://main.v2.beatstars.com/beat?id={ID}&fields=details,stats,licenses', headers=headers)
-            if responseTrackData.status_code == 404:
-                return
-            tracksStreamLinks.append(
-                responseTrackData.json()['response']['data']['details']['stream_url'])
+def getTitle(trackIDs):
+    trackTitles = []
+    for ID in trackIDs:
+        responseTrackData = requests.get(
+            f'https://main.v2.beatstars.com/beat?id={ID}&fields=details,stats,licenses', headers=headers)
+        if responseTrackData.status_code == 404:
+            return
+        trackTitles.append(
+            responseTrackData.json()['response']['data']['details']['title'])
 
-        return tracksStreamLinks
-
-    # Gets all track metadata (not really...)
-    elif getMetaData:
-        metaData = []
-        for elements in tracksData['hits']:
-            metaData.append(elements['metadata'])
-
-        return metaData
-
-    return "Error Occured: Missed Paramaters"
+    return trackTitles
