@@ -14,6 +14,10 @@ python3 setup.py install
 ```
 bsdl -a [ARTIST]
 ```
+#### Download a track
+```
+bsdl -t [LINK]
+```
 
 ## To-Do
 
