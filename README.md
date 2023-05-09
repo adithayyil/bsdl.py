@@ -23,6 +23,7 @@ bsdl -t [LINK]
 
 - [x] Find out why agolia only retreving 100 sets per request ([Read](https://www.algolia.com/doc/guides/managing-results/refine-results/faceting/))
 - [x] Get track titles
-- [ ] Download a single track from a link/trackID
+- [x] Download a single track from a link/trackID
+- [ ] Add metadata to tracks
 - [ ] Loop through each [page](https://www.algolia.com/doc/api-reference/api-parameters/page/) if there are 100> tracks
 - [ ] Depoly to PyPi
