@@ -10,9 +10,9 @@ python3 setup.py install
 
 ## Usage
 
-#### Downloads all tracks from a USER
+#### Download all tracks from a artist
 ```
-bsdl -a [USER]
+bsdl -a [ARTIST]
 ```
 
 ## To-Do
