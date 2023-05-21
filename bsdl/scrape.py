@@ -1,5 +1,6 @@
 import json
 import requests
+from datetime import datetime
 
 headers = {
     'Accept': '*/*',
@@ -89,10 +90,13 @@ def getCoverArts(tracksData):
 
 
 def getDates(tracksData):
-    dates = [data['response']['data']['details']['release_date']
-             for data in tracksData]
+    unformattedDates = [data['response']['data']['details']['release_date']
+                        for data in tracksData]
 
-    return dates
+    formattedDates = [datetime.strptime(date, "%B %d, %Y").strftime(
+        "%Y-%m-%d") for date in unformattedDates]
+
+    return formattedDates
 
 
 def getPermalinks(tracksData):
