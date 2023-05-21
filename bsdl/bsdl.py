@@ -18,12 +18,11 @@ def folderCheck(artist):  # from ttdl
 
 
 def tagSong(beatPath, title, artist, cover, date, description, permalink, genre):
-    try:
-        song = ID3(beatPath)
-    except ID3NoHeaderError:
-        # TODO: handle with wavs (mutagen.mp3.HeaderNotFoundError: can't sync to MPEG frame)
-        song = MP3(beatPath, ID3=ID3)
-        song.add_tags()
+    song = ID3(beatPath)
+
+    # TODO: handle with wavs (mutagen.mp3.HeaderNotFoundError: can't sync to MPEG frame)
+    # song = MP3(beatPath, ID3=ID3)
+    # song.add_tags()
 
     song["TIT2"] = TIT2(encoding=3, text=title)
     song["TPE1"] = TPE1(encoding=3, text=artist)
@@ -72,8 +71,13 @@ def downloadArtist(artist):
                         artistName), songFile)
                     open(filePath, 'wb').write(song.content)
 
-                    tagSong(filePath, title, artistName,
-                            cover, date, description, permalink, genre)
+                    try:
+                        tagSong(filePath, title, artistName,
+                                cover, date, description, permalink, genre)
+                    except:
+                        h.stop_and_persist(
+                            symbol=f'{red}✖', text=f"{white}Error occured while tagging, but downloaded '{title}' successfully")
+                        continue
 
                     h.stop_and_persist(
                         symbol=f'{green}✔', text=f"{white}Downloaded '{title}' successfully!")
