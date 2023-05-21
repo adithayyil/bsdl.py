@@ -1,5 +1,6 @@
 import json
 import requests
+from pydantic import BaseModel
 
 headers = {
     'Accept': '*/*',
@@ -20,8 +21,14 @@ headers = {
 }
 
 
+def getTrackData(ID):
+    trackData = [requests.get(
+        f'https://main.v2.beatstars.com/beat?id={ID}&fields=details,stats,licenses', headers=headers).json()]
+
+    return trackData
+
+
 def getTracksData(artist: str):
-    artistDoesNotExist = True
 
     artistPageResponse = requests.get(
         f'https://main.v2.beatstars.com/musician?permalink={artist}&fields=profile,user_contents,stats,bulk_deals,social_networks', headers=headers)
@@ -36,51 +43,68 @@ def getTracksData(artist: str):
     data = '{{"query":"","page":0,"hitsPerPage":1000,"facets":["*"],"analytics":true,"clickAnalytics":true,"tagFilters":[],"facetFilters":[["profile.memberId:{0}"]],"maxValuesPerFacet":1000,"maxFacetHits":100,"enableABTest":false,"userToken":null,"filters":"","ruleContexts":[]}}'.format(
         memberId)
 
-    responseTracksData = requests.post(
+    profileDataResponse = requests.post(
         'https://nmmgzjq6qi-dsn.algolia.net/1/indexes/public_prod_inventory_track_index_bycustom/query?x-algolia-agent=Algolia%20for%20JavaScript%20(4.12.0)%3B%20Browser',
         headers=headers,
         data=data,
     )
 
     # No tracks in artist/server error
-    if responseTracksData.status_code == 404:
+    if profileDataResponse.status_code == 404:
         return
 
-    tracksData = responseTracksData.json()
+    profileData = profileDataResponse.json()
+
+    trackIDs = [v2Id['v2Id'] for v2Id in profileData['hits']]
+    tracksData = [getTrackData(ID=ID)[0] for ID in trackIDs]
 
     return tracksData
 
 
-def getStream(trackIDs):
-    tracksStreamLinks = []
-    for ID in trackIDs:
-        responseTrackData = requests.get(
-            f'https://main.v2.beatstars.com/beat?id={ID}&fields=details,stats,licenses', headers=headers)
-        if responseTrackData.status_code == 404:
-            return
-        tracksStreamLinks.append(
-            responseTrackData.json()['response']['data']['details']['stream_url'])
+def getTitles(tracksData):
+    titles = [data['response']['data']['details']['title']
+              for data in tracksData]
 
-    return tracksStreamLinks
+    return titles
 
 
-def getTrackIDs(tracksData):
-    trackIDs = []
-    for v2Id in tracksData['hits']:
-        trackIDs.append(
-            v2Id['v2Id'])
+def getArtist(tracksData):
+    artist = [data['response']['data']['details']
+              ['musician']['display_name'] for data in tracksData][0]
 
-    return trackIDs
+    return artist
 
 
-def getTitle(trackIDs):
-    trackTitles = []
-    for ID in trackIDs:
-        responseTrackData = requests.get(
-            f'https://main.v2.beatstars.com/beat?id={ID}&fields=details,stats,licenses', headers=headers)
-        if responseTrackData.status_code == 404:
-            return
-        trackTitles.append(
-            responseTrackData.json()['response']['data']['details']['title'])
+def getStreams(tracksData):
+    streamLinks = [data['response']['data']['details']['stream_ssl_url']
+                   for data in tracksData]
 
-    return trackTitles
+    return streamLinks
+
+
+def getCoverArts(tracksData):
+    coverLinks = [data['response']['data']['details']['artwork']['original']
+                  for data in tracksData]
+
+    return coverLinks
+
+
+def getDates(tracksData):
+    dates = [data['response']['data']['details']['release_date']
+             for data in tracksData]
+
+    return dates
+
+
+def getPermalinks(tracksData):
+    permalinks = [data['response']['data']['details']['beatstars_uri']
+                  for data in tracksData]
+
+    return permalinks
+
+
+def getGenres(tracksData):
+    genres = [data['response']['data']['details']['genre'][0]['name']
+              for data in tracksData]
+
+    return genres

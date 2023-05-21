@@ -9,6 +9,7 @@ setup(
     install_requires=[
         "click",
         "halo"
+        "mutagen"
     ],
     entry_points={
         "console_scripts": [
