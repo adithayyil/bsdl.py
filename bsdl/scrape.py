@@ -99,6 +99,13 @@ def getDates(tracksData):
     return formattedDates
 
 
+def getDescriptions(tracksData):
+    descriptions = [data['response']['data']['details']['description']
+                    for data in tracksData]
+
+    return descriptions
+
+
 def getPermalinks(tracksData):
     permalinks = [data['response']['data']['details']['beatstars_uri']
                   for data in tracksData]

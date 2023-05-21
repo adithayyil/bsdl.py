@@ -4,7 +4,7 @@ import click
 import os
 from halo import Halo
 from mutagen.mp3 import MP3
-from mutagen.id3 import ID3, APIC, TIT2, TDRC, TPE1, WXXX, TCON, ID3NoHeaderError
+from mutagen.id3 import ID3, APIC, TIT2, TDRC, TPE1, WXXX, TCON, COMM, ID3NoHeaderError
 
 
 red = '\033[91m'
@@ -17,7 +17,7 @@ def folderCheck(artist):  # from ttdl
         os.mkdir(os.path.join(artist))
 
 
-def tagSong(beatPath, title, artist, cover, date, permalink, genre):
+def tagSong(beatPath, title, artist, cover, date, description, permalink, genre):
     try:
         song = ID3(beatPath)
     except ID3NoHeaderError:
@@ -39,6 +39,7 @@ def tagSong(beatPath, title, artist, cover, date, permalink, genre):
     )
 
     song["TDRC"] = TDRC(encoding=3, text=date)
+    song["COMM"] = COMM(encoding=3, text=description)
     song["WXXX"] = WXXX(encoding=3, url=permalink)
     song["TCON"] = TCON(encoding=3, text=genre)
 
@@ -54,6 +55,7 @@ def downloadArtist(artist):
     titles = getTitles(tracksData)
     covers = getCoverArts(tracksData)
     dates = getDates(tracksData)
+    descriptions = getDescriptions(tracksData)
     permalinks = getPermalinks(tracksData)
     genres = getGenres(tracksData)
     spinner.stop()
@@ -61,7 +63,7 @@ def downloadArtist(artist):
     if streams != None:
         loadFormat = "Downloading track..."
         with Halo(text=loadFormat, spinner='dots') as h:
-            for (title, link, cover, date, permalink, genre) in zip(titles, streams, covers, dates, permalinks, genres):
+            for (title, link, cover, date, description, permalink, genre) in zip(titles, streams, covers, dates, descriptions, permalinks, genres):
                 song = requests.get(link, headers=headers)
                 if (song.status_code == 200):
                     folderCheck(artistName)
@@ -71,7 +73,7 @@ def downloadArtist(artist):
                     open(filePath, 'wb').write(song.content)
 
                     tagSong(filePath, title, artistName,
-                            cover, date, permalink, genre)
+                            cover, date, description, permalink, genre)
 
                     h.stop_and_persist(
                         symbol=f'{green}✔', text=f"{white}Downloaded '{title}' successfully!")
@@ -92,6 +94,7 @@ def downloadTrack(link):
     title = getTitles(trackData)[0]
     cover = getCoverArts(trackData)[0]
     date = getDates(trackData)[0]
+    description = getDescriptions(trackData)[0]
     permalink = getPermalinks(trackData)[0]
     genre = getGenres(trackData)[0]
     spinner.stop()
@@ -106,7 +109,7 @@ def downloadTrack(link):
                 filePath = f'{title}.mp3'
 
                 tagSong(filePath, title, artistName,
-                        cover, date, permalink, genre)
+                        cover, date, description, permalink, genre)
 
                 h.stop_and_persist(
                     symbol=f'{green}✔', text=f"{white}Downloaded '{title}' successfully!")
