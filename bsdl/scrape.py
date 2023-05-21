@@ -1,6 +1,5 @@
 import json
 import requests
-from pydantic import BaseModel
 
 headers = {
     'Accept': '*/*',
