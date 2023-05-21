@@ -8,7 +8,7 @@ setup(
     author="adithayyil",
     install_requires=[
         "click",
-        "halo"
+        "halo",
         "mutagen"
     ],
     entry_points={
