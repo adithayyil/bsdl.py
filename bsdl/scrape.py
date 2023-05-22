@@ -40,22 +40,38 @@ def getTracksData(artist: str):
         'response']['data']['profile']['user_id']
     memberId = f'MR{userID}'
 
-    data = '{{"query":"","page":0,"hitsPerPage":1000,"facets":["*"],"analytics":true,"clickAnalytics":true,"tagFilters":[],"facetFilters":[["profile.memberId:{0}"]],"maxValuesPerFacet":1000,"maxFacetHits":100,"enableABTest":false,"userToken":null,"filters":"","ruleContexts":[]}}'.format(
-        memberId)
+    page = 0
+    dataBundle = []
 
-    profileDataResponse = requests.post(
-        'https://nmmgzjq6qi-dsn.algolia.net/1/indexes/public_prod_inventory_track_index_bycustom/query?x-algolia-agent=Algolia%20for%20JavaScript%20(4.12.0)%3B%20Browser',
-        headers=headers,
-        data=data,
-    )
+    while True:
 
-    # No tracks in artist/server error
-    if profileDataResponse.status_code == 404:
-        return
+        data = '{{"query":"","page":{0},"hitsPerPage":1000,"facets":["*"],"analytics":true,"clickAnalytics":true,"tagFilters":[],"facetFilters":[["profile.memberId:{1}"]],"maxValuesPerFacet":1000,"maxFacetHits":100,"enableABTest":false,"userToken":null,"filters":"","ruleContexts":[]}}'.format(
+            page, memberId)
 
-    profileData = profileDataResponse.json()
+        profileDataResponse = requests.post(
+            'https://nmmgzjq6qi-dsn.algolia.net/1/indexes/public_prod_inventory_track_index_bycustom/query?x-algolia-agent=Algolia%20for%20JavaScript%20(4.12.0)%3B%20Browser',
+            headers=headers,
+            data=data,
+        )
 
-    trackIDs = [v2Id['v2Id'] for v2Id in profileData['hits']]
+        # No tracks in artist/server error
+        if profileDataResponse.status_code == 404:
+            return
+
+        if profileDataResponse.status_code == 200:
+            profileData = profileDataResponse.json()
+
+            hits = profileData['hits']
+            dataBundle.extend(hits)
+
+            if profileData.get('nbPages', 0) <= page:
+                break
+            page += 1
+
+    with open('data.json', "w") as file:
+        json.dump(dataBundle, file)
+
+    trackIDs = [v2Id['v2Id'] for v2Id in dataBundle]
     tracksData = [getTrackData(ID=ID)[0] for ID in trackIDs]
 
     return tracksData
