@@ -89,14 +89,11 @@ def getCoverArts(tracksData):
     return coverLinks
 
 
-def getDates(tracksData):
-    unformattedDates = [data['response']['data']['details']['release_date']
-                        for data in tracksData]
+def getTimestamps(tracksData):
+    timestamps = [data['response']['data']['details']['release_date_time']
+                  for data in tracksData]
 
-    formattedDates = [datetime.strptime(date, "%B %d, %Y").strftime(
-        "%Y-%m-%d") for date in unformattedDates]
-
-    return formattedDates
+    return timestamps
 
 
 def getDescriptions(tracksData):

@@ -3,9 +3,7 @@ from bsdl.scrape import *
 import click
 import os
 from halo import Halo
-from mutagen.mp3 import MP3
-from mutagen.id3 import ID3, APIC, TIT2, TDRC, TPE1, WXXX, TCON, COMM, ID3NoHeaderError
-
+import mutagen
 
 red = '\033[91m'
 green = '\033[92m'
@@ -17,32 +15,28 @@ def folderCheck(artist):  # from ttdl
         os.mkdir(os.path.join(artist))
 
 
-def tagSong(beatPath, title, artist, cover, date, description, permalink, genre):
-    song = ID3(beatPath)
+def tagSong(beatPath, title, artist, cover, description, permalink, genre):
+    song = mutagen.File(beatPath)
 
-    # TODO: handle with wavs (mutagen.mp3.HeaderNotFoundError: can't sync to MPEG frame)
-    # song = MP3(beatPath, ID3=ID3)
-    # song.add_tags()
-
-    song["TIT2"] = TIT2(encoding=3, text=title)
-    song["TPE1"] = TPE1(encoding=3, text=artist)
+    song["TIT2"] = mutagen.id3.TIT2(encoding=3, text=title)
+    song["TPE1"] = mutagen.id3.TPE1(encoding=3, text=artist)
 
     response = requests.get(cover, headers=headers)
     coverData = response.content
-
-    song["APIC"] = APIC(
+    song["APIC"] = mutagen.id3.APIC(
         encoding=3,
         mime="image/jpeg",
         type=3,
         data=coverData
     )
 
-    song["TDRC"] = TDRC(encoding=3, text=date)
-    song["COMM"] = COMM(encoding=3, text=description)
-    song["WXXX"] = WXXX(encoding=3, url=permalink)
-    song["TCON"] = TCON(encoding=3, text=genre)
+    song["COMM"] = mutagen.id3.COMM(
+        encoding=3, lang="ENG", text=description)
 
-    song.save(v2_version=3)
+    song["WOAS"] = mutagen.id3.WOAS(url=permalink)
+    song["TCON"] = mutagen.id3.TCON(encoding=3, text=genre)
+
+    song.save()
 
 
 def downloadArtist(artist):
@@ -53,31 +47,38 @@ def downloadArtist(artist):
     streams = getStreams(tracksData)
     titles = getTitles(tracksData)
     covers = getCoverArts(tracksData)
-    dates = getDates(tracksData)
+    timestamps = getTimestamps(tracksData)
     descriptions = getDescriptions(tracksData)
     permalinks = getPermalinks(tracksData)
     genres = getGenres(tracksData)
     spinner.stop()
 
     if streams != None:
-        loadFormat = "Downloading track..."
+        loadFormat = "Downloading tracks..."
         with Halo(text=loadFormat, spinner='dots') as h:
-            for (title, link, cover, date, description, permalink, genre) in zip(titles, streams, covers, dates, descriptions, permalinks, genres):
+            for (title, link, cover, timestamp, description, permalink, genre) in zip(titles, streams, covers, timestamps, descriptions, permalinks, genres):
                 song = requests.get(link, headers=headers)
                 if (song.status_code == 200):
                     folderCheck(artistName)
-                    songFile = title.replace("/", "_") + ".mp3"
-                    filePath = os.path.join(os.path.join(
-                        artistName), songFile)
+                    songFile = title.replace("/", "_")
+
+                    if song.headers.get('content-type') == 'audio/mpeg':
+                        songFile += ".mp3"
+                    elif song.headers.get('content-type') == 'audio/wav':
+                        songFile += ".wav"
+                    else:
+                        h.stop_and_persist(
+                            symbol=f'{red}✖' + f"{red} Unsupported file type for '{title}'!")
+                        continue
+
+                    filePath = os.path.join(os.path.join(artistName), songFile)
                     open(filePath, 'wb').write(song.content)
 
-                    try:
-                        tagSong(filePath, title, artistName,
-                                cover, date, description, permalink, genre)
-                    except:
-                        h.stop_and_persist(
-                            symbol=f'{red}✖', text=f"{white}Error occured while tagging, but downloaded '{title}' successfully")
-                        continue
+                    tagSong(filePath, title, artistName,
+                            cover, description, permalink, genre)
+
+                    current_atime = os.path.getatime(filePath)
+                    os.utime(filePath, (current_atime, timestamp))
 
                     h.stop_and_persist(
                         symbol=f'{green}✔', text=f"{white}Downloaded '{title}' successfully!")
@@ -97,7 +98,7 @@ def downloadTrack(link):
     stream = getStreams(trackData)[0]
     title = getTitles(trackData)[0]
     cover = getCoverArts(trackData)[0]
-    date = getDates(trackData)[0]
+    timestamp = getTimestamps(trackData)[0]
     description = getDescriptions(trackData)[0]
     permalink = getPermalinks(trackData)[0]
     genre = getGenres(trackData)[0]
@@ -106,14 +107,26 @@ def downloadTrack(link):
     if stream != None:
         loadFormat = "Downloading track..."
         with Halo(text=loadFormat, spinner='dots') as h:
-            beat = requests.get(stream, headers=headers)
-            if (beat.status_code == 200):
-                open(os.path.join(title.replace(
-                    "/", "_")) + ".mp3", 'wb').write(beat.content)
-                filePath = f'{title}.mp3'
+            song = requests.get(stream, headers=headers)
+            if (song.status_code == 200):
+                songFile = title.replace("/", "_")
+
+                if song.headers.get('content-type') == 'audio/mpeg':
+                    songFile += ".mp3"
+                elif song.headers.get('content-type') == 'audio/wav':
+                    songFile += ".wav"
+                else:
+                    h.stop_and_persist(
+                        symbol=f'{red}✖' + f"{red} Unsupported file type for '{title}'!")
+
+                filePath = songFile
+                open(filePath, 'wb').write(song.content)
 
                 tagSong(filePath, title, artistName,
-                        cover, date, description, permalink, genre)
+                        cover, description, permalink, genre)
+
+                current_atime = os.path.getatime(filePath)
+                os.utime(filePath, (current_atime, timestamp))
 
                 h.stop_and_persist(
                     symbol=f'{green}✔', text=f"{white}Downloaded '{title}' successfully!")
@@ -124,9 +137,9 @@ def downloadTrack(link):
         print(f"Invalid link!")
 
 
-@click.command(help="bsdl - a CLI tool for downloading BeatStars music.")
-@click.option("-artist", "-a", help='Download all tracks from a artist', metavar="[ARTIST]")
-@click.option("-track", "-t", help='Download a track', metavar="[LINK]")
+@ click.command(help="bsdl - a CLI tool for downloading BeatStars music.")
+@ click.option("-artist", "-a", help='Download all tracks from a artist', metavar="[ARTIST]")
+@ click.option("-track", "-t", help='Download a track', metavar="[LINK]")
 def main(artist: str, track: str):
     if artist:
         downloadArtist(artist)
